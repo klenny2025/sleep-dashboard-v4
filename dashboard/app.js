@@ -59,11 +59,20 @@ function pillMin(obj) {
   return ok ? `<span class="pill pill-ok">Cumple</span>` : `<span class="pill pill-bad">No cumple</span>`;
 }
 
-function fileLinks(image_url, pdf_url) {
-  const parts = [];
-  if (image_url) parts.push(`<a class="link" href="${escapeHtml(image_url)}" target="_blank" rel="noopener">Imagen</a>`);
-  if (pdf_url) parts.push(`<a class="link" href="${escapeHtml(pdf_url)}" target="_blank" rel="noopener">PDF</a>`);
-  return parts.length ? parts.join(" · ") : `<span class="muted">—</span>`;
+function fileLinks(imageUrl, pdfUrl){
+  const items = [];
+  const mk = (label, url, ext) => {
+    const safe = esc(url);
+    const fname = `entrega-${ext}`;
+    return `<div class="file-actions">
+      <span class="label">${label}:</span>
+      <a class="chip" href="${safe}" target="_blank" rel="noopener">Ver</a>
+      <a class="chip" href="${safe}" download="${fname}">Descargar</a>
+    </div>`;
+  };
+  if (imageUrl) items.push(mk("Imagen", imageUrl, "imagen"));
+  if (pdfUrl)   items.push(mk("PDF",   pdfUrl,   "pdf"));
+  return items.length ? items.join("") : `<span class="small-muted">—</span>`;
 }
 
 /* ---------------------------

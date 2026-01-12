@@ -28,7 +28,22 @@ export default {
         return withCORS(await getWorkers(request, env), request, env);
       }
 
-      if (url.pathname === "/health") {
+      
+    // Demo helpers (admin)
+    if (url.pathname === "/api/demo/seed" && request.method === "POST") {
+      const unauth = requireApiKey_(request, env);
+      if (unauth) return withCORS(unauth, request, env);
+      const res = await demoSeed_(request, env);
+      return withCORS(res, request, env);
+    }
+    if (url.pathname === "/api/demo/clear" && (request.method === "POST" || request.method === "DELETE")) {
+      const unauth = requireApiKey_(request, env);
+      if (unauth) return withCORS(unauth, request, env);
+      const res = await demoClear_(env);
+      return withCORS(res, request, env);
+    }
+
+if (url.pathname === "/health") {
         return withCORS(json({ ok: true, service: "sleep-dashboard-api" }), request, env);
       }
 
@@ -136,6 +151,16 @@ function clampInt(n) {
   const x = Number(n);
   if (!Number.isFinite(x)) return null;
   return Math.trunc(x);
+}
+
+
+function getMinSleepMinutes(env) {
+  // Minutes required to be considered "cumple". Default: 5h45m = 345.
+  const def = 345;
+  const raw = env && env.MIN_SLEEP_MINUTES != null ? String(env.MIN_SLEEP_MINUTES).trim() : "";
+  const x = parseInt(raw, 10);
+  if (Number.isFinite(x) && x > 0 && x < 24 * 60) return x;
+  return def;
 }
 
 function fmtDuration(h, m) {
@@ -694,4 +719,60 @@ async function getWorkers(request, env) {
       is_active: Number(w.is_active) === 1,
     })),
   });
+}
+
+
+function requireApiKey_(request, env){
+  const expected = (env.API_KEY || "").toString().trim();
+  if (!expected) return null; // API key not configured => do not block
+  const got = (request.headers.get("X-API-KEY") || "").toString().trim();
+  if (!got || got !== expected){
+    return json({ ok:false, error:"Unauthorized", detail:"Missing/invalid X-API-KEY" }, { status: 401 });
+  }
+  return null;
+}
+
+async function demoClear_(env){
+  await env.DB.prepare("DELETE FROM workers_sleep_entries").run();
+  await env.DB.prepare("DELETE FROM workers").run();
+  return json({ ok:true, cleared:true });
+}
+
+async function demoSeed_(request, env){
+  const url = new URL(request.url);
+  const date = (url.searchParams.get("date") || todayInTZ(env.DEFAULT_TIMEZONE || "UTC")).slice(0,10);
+  // Reset current demo data (workers + entries)
+  await demoClear_(env);
+
+  const origin = ((env.DASHBOARD_ORIGIN || env.ALLOWED_ORIGIN || "") + "").replace(/\/$/, "");
+  const img = origin ? `${origin}/assets/demo-image.png` : null;
+  const pdf = origin ? `${origin}/assets/demo.pdf` : null;
+
+  const workers = [
+    { key: "carlos_diaz", name: "Carlos D\u00EDaz", schedule: "MON_FRI" },
+    { key: "juan_perez",  name: "Juan P\u00E9rez",  schedule: "MON_FRI" },
+    { key: "luis_gomez",  name: "Luis G\u00F3mez",  schedule: "MON_FRI" },
+  ];
+
+  const now = new Date().toISOString();
+
+  for (const w of workers){
+    await env.DB.prepare(
+      "INSERT INTO workers (worker_key, worker_name, required_schedule, created_at, updated_at) VALUES (?, ?, ?, ?, ?)"
+    ).bind(w.key, w.name, w.schedule, now, now).run();
+  }
+
+  const entries = [
+    { key: "carlos_diaz", minutes: 0,   text: "0 h 0 min"   },
+    { key: "juan_perez",  minutes: 450, text: "7 h 30 min"  },
+    { key: "luis_gomez",  minutes: 255, text: "4 h 15 min"  },
+  ];
+
+  for (const e of entries){
+    await env.DB.prepare(
+      "INSERT INTO workers_sleep_entries (worker_key, entry_date, sleep_minutes, sleep_text, source, image_url, pdf_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(e.key, date, e.minutes, e.text, "demo", img, pdf, now, now).run();
+  }
+
+  return json({ ok:true, seeded:true, date, workers: workers.length, entries: entries.length, image_url: img, pdf_url: pdf });
 }

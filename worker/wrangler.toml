@@ -5,6 +5,7 @@ compatibility_date = "2026-01-01"
 # Variables públicas (NO secrets)
 [vars]
 ALLOWED_ORIGIN = "https://sleep-dashboard-v4.pages.dev"
+DASHBOARD_ORIGIN = "https://sleep-dashboard-v4.pages.dev"
 DEFAULT_COUNTRY = "PE"
 DEFAULT_TIMEZONE = "America/Lima"
 DEFAULT_REQUIRED_SCHEDULE = "MON_FRI"

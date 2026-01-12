@@ -1,123 +1,101 @@
-# Registro iSleep – RB&RD (Cloudflare Pages + Workers + D1)
+# Sleep Dashboard (Cloudflare Pages + Workers + D1)
 
-Solución completa:
-- Frontend: Cloudflare Pages (carpeta `/dashboard`)
-- API: Cloudflare Worker (carpeta `/worker`)
-- DB: Cloudflare D1 (SQLite)
+Este proyecto tiene 2 partes:
 
-## Requisitos (Windows 11)
-1) Instalar **Node.js LTS** (incluye npm)
-2) Instalar **Git**
-3) (Recomendado) **VS Code**
-4) Cloudflare account (gratis)
+1) `worker/` = API (Cloudflare Workers) + base de datos D1 (SQLite)
+2) `dashboard/` = Página web estática (Cloudflare Pages) que consume la API
 
-## 1) Iniciar desde cero en GitHub
-1) Crea un repo vacío en GitHub (ej: `sleep-dashboard`)
-2) En tu PC:
+## 1) Archivos y para qué sirve cada uno
+
+### API (Worker)
+- `worker/src/index.js`  
+  Código del backend (endpoints `/api/*`), validación y ranking.
+
+- `worker/schema.sql`  
+  Script SQL para crear las tablas en D1:
+  - `workers`
+  - `workers_sleep_entries`
+  - `holidays`
+
+- `worker/wrangler.toml`  
+  Configuración de despliegue del Worker. Aquí debes pegar tu `database_id` (D1).
+
+### Dashboard (Pages)
+- `dashboard/index.html`  
+  Página principal. Aquí debes configurar `window.__API_BASE__` con tu URL del Worker.
+
+- `dashboard/app.js`  
+  Lógica del dashboard (fetch a la API, tablas, KPI, gráfico).
+
+- `dashboard/styles.css`  
+  Estilos.
+
+## 2) Requisitos en tu PC (Windows 11)
+- Node.js LTS
+- Git
+- (Recomendado) Visual Studio Code
+- Wrangler (se instala con npm)
+
+## 3) Despliegue paso a paso (rápido)
+
+### A) Preparar la API (Workers + D1)
+1. Abre PowerShell en la carpeta `worker/`:
+   `cd <ruta>\sleep-dashboard\worker`
+
+2. Instala Wrangler (si no lo tienes):
+   `npm i -g wrangler`
+
+3. Login:
+   `wrangler login`
+
+4. Crear base D1:
+   `wrangler d1 create sleep_db`
+
+5. Copia el `database_id` que te muestra y pégalo en `worker/wrangler.toml` en:
+   `database_id = "REEMPLAZA_CON_TU_DATABASE_ID"`
+
+6. Ejecutar el SQL:
+   `wrangler d1 execute sleep_db --file=.\schema.sql --remote`
+
+7. Publicar Worker:
+   `wrangler deploy`
+
+8. Crear el secret API_KEY:
+   `wrangler secret put API_KEY`
+
+   Pega una clave larga (por ejemplo 32+ caracteres).
+
+### B) Conectar el dashboard
+1. Edita `dashboard/index.html` y cambia:
+   `window.__API_BASE__ = "https://TU-WORKER.tu-subdominio.workers.dev";`
+
+   Pega la URL real de tu Worker (sale en `wrangler deploy`).
+
+### C) Publicar el dashboard con Cloudflare Pages + GitHub
+1. Sube esta carpeta a un repo GitHub (todo el proyecto).
+2. En Cloudflare Dashboard -> Workers & Pages -> Create application -> Pages.
+3. Conecta tu repo.
+4. Config:
+   - Build command: `exit 0`
+   - Build output directory: `dashboard`
+5. Deploy.
+
+## 4) Pruebas manuales (PowerShell)
+
+Reemplaza TU-WORKER y TU_API_KEY:
+
 ```powershell
-cd C:\
-mkdir sleep-dashboard
-# (Opcional) borra carpeta si existe, o usa otro nombre
-```
-3) Copia el contenido de este ZIP dentro de `C:\sleep-dashboard`
-4) Inicializa git y sube:
-```powershell
-cd C:\sleep-dashboard
-git init
-git add .
-git commit -m "Initial: Registro iSleep RB&RD"
-git branch -M main
-git remote add origin https://github.com/<TU_USUARIO>/<TU_REPO>.git
-git push -u origin main
+$api = "https://TU-WORKER.workers.dev"
+$headers = @{ "Content-Type"="application/json"; "X-API-KEY"="TU_API_KEY" }
+$body = @{ worker_name="Juan Perez"; date="2026-01-11"; sleep_h=7; sleep_m=30; source="manual" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "$api/api/entries" -Headers $headers -Body $body
+Invoke-RestMethod -Method Get -Uri "$api/api/ranking?month=2026-01"
+Invoke-RestMethod -Method Get -Uri "$api/api/entries?month=2026-01"
+Invoke-RestMethod -Method Get -Uri "$api/api/today?date=2026-01-11"
 ```
 
-## 2) Worker + D1 (backend)
-### 2.1 Login Wrangler
-```powershell
-npm i -g wrangler
-wrangler login
-```
+## 5) Notas
+- El POST está protegido por `X-API-KEY`.
+- La UI solo usa GET (sin exponer secretos).
+- Consolidación por día: toma el registro de mayor duración; empate -> más reciente.
 
-### 2.2 Crear D1
-```powershell
-cd C:\sleep-dashboard\worker
-wrangler d1 create sleep_db
-```
-Copia el `database_id` que te muestre y pégalo en `worker/wrangler.toml` (campo `database_id`).
-
-### 2.3 Crear tablas (schema)
-```powershell
-wrangler d1 execute sleep_db --file=.\schema.sql --remote
-```
-
-> Si ya tenías la DB de versiones anteriores y falta la columna `status`:
-```powershell
-wrangler d1 execute sleep_db --file=.\migrations\001_add_status.sql --remote
-```
-
-### 2.4 Configurar API_KEY (secret)
-```powershell
-wrangler secret put API_KEY
-```
-Pega tu API key (por ejemplo: `RBYRD_SLEEP_2026__...`)
-
-### 2.5 Deploy Worker
-```powershell
-wrangler deploy
-```
-
-## 3) Cloudflare Pages (frontend)
-En Cloudflare Dashboard:
-- Workers & Pages -> Pages -> Create project -> Connect GitHub
-- Selecciona tu repo
-- Build:
-  - Framework: None
-  - Build command: (vacío)
-  - Output directory: `dashboard`
-- Deploy
-
-Tu URL será algo como:
-`https://<proyecto>.pages.dev`
-
-## 4) Probar localmente el dashboard
-```powershell
-cd C:\sleep-dashboard\dashboard
-npx serve .
-```
-Abre:
-http://localhost:3000
-
-## 5) Crear datos DEMO (3 ejemplos)
-En la página “Mensual” tienes botones:
-- “Crear datos demo”
-- “Borrar datos demo”
-Te pedirá API KEY.
-
-También por curl:
-```powershell
-$api="https://<tu-worker>.workers.dev"
-$h=@{"X-API-KEY"="TU_API_KEY";"Content-Type"="application/json"}
-Invoke-RestMethod -Method Post -Uri "$api/api/demo/seed" -Headers $h
-Invoke-RestMethod -Method Delete -Uri "$api/api/demo/clear" -Headers $h
-```
-
-## 6) OCR fallido (Pendiente)
-Cuando el bot no pueda leer:
-- Enviar `status:"PENDING"` y `pdf_url` / `image_url`
-Ejemplo:
-```json
-{
-  "worker_name": "Luis Gomez",
-  "date": "2026-01-12",
-  "status": "PENDING",
-  "source": "telegram",
-  "image_url": "https://.../image.jpg",
-  "pdf_url": "https://.../file.pdf",
-  "raw_text": "OCR failed"
-}
-```
-
-## 7) Feriados
-En “Mensual”:
-- “Cargar feriados (2026–2030)” (Perú) -> requiere API KEY
-- Puedes agregar feriados manuales (ej: aniversario empresa) o eliminarlos.

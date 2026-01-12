@@ -1,0 +1,9 @@
+# Node (si luego agregas)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Wrangler local
+.wrangler/

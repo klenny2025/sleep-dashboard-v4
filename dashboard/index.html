@@ -5,38 +5,40 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./styles.css" />
-  <script>
-    window.__API_BASE__ = "https://sleep-dashboard-api.sleep-rbyrd.workers.dev";
-    window.__MIN_SLEEP_MINUTES__ = 345;
-  </script>
-  <title>Hoy · Registro iSleep – RB&RD</title>
+  <script>window.__API_BASE__ = "https://sleep-dashboard-api.somma-rbyrd.workers.dev";</script>
+  <title>Hoy · Sueño Trabajadores</title>
   
 </head>
 <body data-page="home">
 <header class="topbar">
   <div class="brand">
-    <img src="./assets/logo-rbrd.jpg" alt="RB&RD" />
-    <div>
-      <div class="title">Registro iSleep – RB&RD</div>
-      <div class="sub">Control diario y ranking mensual</div>
+    <div class="mark">Zz</div>
+    <div class="brand-txt">
+      <div class="brand-title">Sueño Trabajadores</div>
+      <div class="brand-sub">Dashboard & Control</div>
     </div>
   </div>
   <nav class="nav">
-    <a href="./index.html" data-nav="home">Hoy</a>
-    <a href="./monthly.html" data-nav="monthly">Mensual</a>
-    <a href="./records.html" data-nav="records">Registros</a>
-    <a href="./media.html" data-nav="media">Archivos</a>
+    <a class="navlink" href="./index.html" data-nav="home">Hoy</a>
+    <a class="navlink" href="./monthly.html" data-nav="monthly">Mensual</a>
+    <a class="navlink" href="./records.html" data-nav="records">Registros</a>
+    <a class="navlink" href="./media.html" data-nav="media">Archivos</a>
   </nav>
 </header>
 
 <main class="wrap">
   <section class="hero">
     <div>
-      <h1>Entregas del día</h1>
-      <p class="lead">Estado por trabajador: <b>Cumple</b> (verde), <b>No cumple</b> (rojo) o <b>Pendiente</b> (amarillo si OCR falló).</p>
+      <h1>Control diario</h1>
+      <p class="lead">Aquí ves <b>quién registró</b>, <b>quién falta</b> (solo días requeridos) y acceso a archivos del día.</p>
+      <div class="pill-row">
+        <span class="pill pill-ok">OK</span>
+        <span class="pill pill-warn">No requerido</span>
+        <span class="pill pill-bad">Pendiente</span>
+      </div>
     </div>
 
-    <div class="card hero-card">
+    <div class="hero-card">
       <div class="field">
         <label for="todayPicker">Día</label>
         <input id="todayPicker" type="date" />
@@ -46,19 +48,11 @@
     </div>
   </section>
 
-  <section class="card">
-    <div class="card-h">
-      <h2>Tarjetas por trabajador</h2>
-      <div class="small">Haz click en “Imagen/PDF” para revisar entregas. Si OCR falló, quedará “Pendiente”.</div>
-    </div>
-    <div id="cardsGrid" class="cards"></div>
-  </section>
-
-  <section class="grid2" style="margin-top:12px;">
+  <section class="grid2">
     <div class="card">
       <div class="card-h">
         <h2>Registraron</h2>
-        <div class="small">Incluye “no requerido” (feriados/no obligatorios). El estado de horas igual se muestra.</div>
+        <div class="small muted">Incluye “no requerido” (domingos/feriados no obligatorios)</div>
       </div>
       <div class="table-wrap">
         <table class="table" id="registeredTable">
@@ -67,6 +61,7 @@
               <th>Trabajador</th>
               <th>Sueño</th>
               <th>Estado</th>
+              <th>Condición (≥ 5 h 45 min)</th>
               <th>Archivos</th>
             </tr>
           </thead>
@@ -78,7 +73,7 @@
     <div class="card">
       <div class="card-h">
         <h2>Pendientes</h2>
-        <div class="small">Solo trabajadores requeridos hoy que no registraron.</div>
+        <div class="small muted">Solo los que deben registrar hoy</div>
       </div>
       <div class="table-wrap">
         <table class="table" id="pendingTable">
@@ -93,7 +88,20 @@
       </div>
     </div>
   </section>
+
+  <section class="card">
+    <div class="card-h">
+      <h2>Entregas del día (tarjetas)</h2>
+      <div class="small muted">Vista interactiva por trabajador (status y último registro del día)</div>
+    </div>
+    <div id="cardsGrid" class="cards"></div>
+  </section>
 </main>
+
+<footer class="footer">
+  <div>API: <span class="mono" id="apiLabel"></span></div>
+  <div class="muted">Pages + Workers + D1</div>
+</footer>
 
 <script src="./app.js"></script>
 </body>

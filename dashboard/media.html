@@ -5,27 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./styles.css" />
-  <script>
-    window.__API_BASE__ = "https://sleep-dashboard-api.sleep-rbyrd.workers.dev";
-    window.__MIN_SLEEP_MINUTES__ = 345;
-  </script>
-  <title>Archivos · Registro iSleep – RB&RD</title>
+  <script>window.__API_BASE__ = "https://sleep-dashboard-api.somma-rbyrd.workers.dev";</script>
+  <title>Archivos · Sueño Trabajadores</title>
   
 </head>
 <body data-page="media">
 <header class="topbar">
   <div class="brand">
-    <img src="./assets/logo-rbrd.jpg" alt="RB&RD" />
-    <div>
-      <div class="title">Registro iSleep – RB&RD</div>
-      <div class="sub">Control diario y ranking mensual</div>
+    <div class="mark">Zz</div>
+    <div class="brand-txt">
+      <div class="brand-title">Sueño Trabajadores</div>
+      <div class="brand-sub">Dashboard & Control</div>
     </div>
   </div>
   <nav class="nav">
-    <a href="./index.html" data-nav="home">Hoy</a>
-    <a href="./monthly.html" data-nav="monthly">Mensual</a>
-    <a href="./records.html" data-nav="records">Registros</a>
-    <a href="./media.html" data-nav="media">Archivos</a>
+    <a class="navlink" href="./index.html" data-nav="home">Hoy</a>
+    <a class="navlink" href="./monthly.html" data-nav="monthly">Mensual</a>
+    <a class="navlink" href="./records.html" data-nav="records">Registros</a>
+    <a class="navlink" href="./media.html" data-nav="media">Archivos</a>
   </nav>
 </header>
 
@@ -33,9 +30,9 @@
   <section class="hero hero-small">
     <div>
       <h1>Archivos (fotos / PDF)</h1>
-      <p class="lead">Descarga por trabajador. Si OCR falla, aparecerá como <b>Pendiente</b> (amarillo).</p>
+      <p class="lead">Lista descargable desde <code>image_url</code> y <code>pdf_url</code>.</p>
     </div>
-    <div class="card hero-card">
+    <div class="hero-card">
       <div class="field">
         <label for="monthPicker">Mes</label>
         <input id="monthPicker" type="month" />
@@ -57,21 +54,25 @@
             <th>Fecha</th>
             <th>Trabajador</th>
             <th>Sueño</th>
-            <th>Estado</th>
+            <th>Condición</th>
             <th>Imagen</th>
             <th>PDF</th>
-            <th>Ruta sugerida (R2)</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
 
-    <div class="small" style="margin-top:10px;">
-      Estructura sugerida: <span class="mono">workers/&lt;worker_key&gt;/&lt;YYYY-MM-DD&gt;/</span>
+    <div class="small muted" style="margin-top:10px;">
+      Carpeta sugerida en R2: <code>workers/&lt;worker_key&gt;/&lt;YYYY-MM-DD&gt;/</code>
     </div>
   </section>
 </main>
+
+<footer class="footer">
+  <div>API: <span class="mono" id="apiLabel"></span></div>
+  <div class="muted">Pages + Workers + D1</div>
+</footer>
 
 <script src="./app.js"></script>
 </body>
